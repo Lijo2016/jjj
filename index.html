@@ -73,9 +73,9 @@ button {
 </div>
 
 <div class="card">
-  <button onclick="start()">▶ Indítás</button>
-  <button onclick="pause()">⏸ Szünet</button>
-  <button onclick="reset()">↻ Nullázás</button>
+  <button onclick="start()">Indítás</button>
+  <button onclick="pause()">Szünet</button>
+  <button onclick="reset()">Nullázás</button>
   <p id="status" class="small">Készen áll.</p>
 </div>
 
@@ -90,8 +90,7 @@ const $=id=>document.getElementById(id);
 
 function power(){
   return Math.max(0,Number($("volt").value)*
-                     Number($("amp").value));
-}
+                     Number($("amp").value.replace(",", "."));
 
 function update(){
   const w=power();
