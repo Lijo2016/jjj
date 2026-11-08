@@ -1,1589 +1,393 @@
+
 <!DOCTYPE html>
 <html lang="hu">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
-<meta name="theme-color" content="#07111f">
-
-<title>Kamerás Wm mérő</title>
-
-<!--
-  API-kulcs NEM kell.
-  Az OCR a telefonon/böngészőben fut.
--->
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Maxwell EM306B – Fogyasztásmérő</title>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
-
 <style>
-* {
-  box-sizing: border-box;
+*{box-sizing:border-box}
+body{
+  margin:0;background:#101820;color:#edf3f7;
+  font-family:Arial,sans-serif;padding:16px
 }
-
-body {
-  margin: 0;
-  background: #07111f;
-  color: #fff;
-  font-family: system-ui, -apple-system, sans-serif;
+main{max-width:850px;margin:auto}
+h1{font-size:23px;color:#50d6a0}
+h2{font-size:17px;color:#50d6a0}
+.card{
+ background:#1c2935;border:1px solid #344454;
+ border-radius:13px;padding:16px;margin:13px 0
 }
-
-.app {
-  max-width: 720px;
-  margin: auto;
-  padding: 14px;
+button,select,input{
+ padding:12px;border-radius:8px;border:1px solid #526477;
+ background:#263747;color:white;font-size:16px;
+ max-width:100%
 }
-
-h1 {
-  margin: 4px 0;
-  font-size: 25px;
+button{cursor:pointer;background:#087e60;border:0;margin:4px}
+button.secondary{background:#405368}
+button:disabled{opacity:.5}
+input{width:100%;margin:5px 0 12px}
+label{font-size:13px;color:#b9c9d5}
+video{width:100%;border-radius:10px;background:#000}
+.camera{position:relative}
+.roi{
+ position:absolute;left:12%;top:25%;width:76%;height:48%;
+ border:2px dashed #50d6a0;pointer-events:none
 }
-
-.subtitle {
-  color: #94a7bb;
-  margin-bottom: 14px;
+.grid{
+ display:grid;grid-template-columns:repeat(2,1fr);gap:10px
 }
-
-/* KAMERA */
-
-.camera {
-  position: relative;
-  width: 100%;
-  aspect-ratio: 4 / 3;
-  overflow: hidden;
-  background: #000;
-  border-radius: 16px;
-  border: 2px solid #263a51;
+.value{
+ font-size:30px;font-weight:bold;color:#50d6a0;
+ overflow-wrap:anywhere
 }
-
-video {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-/*
-  Ezt a keretet igazítsd a multiméter
-  3 digites kijelzőjére.
-*/
-.roi {
-  position: absolute;
-
-  left: 10%;
-  top: 34%;
-
-  width: 80%;
-  height: 32%;
-
-  border: 3px solid #00ff88;
-
-  border-radius: 10px;
-
-  box-shadow:
-    0 0 0 9999px rgba(0,0,0,.30);
-
-  pointer-events: none;
-}
-
-.roi-label {
-  position: absolute;
-  top: 5px;
-  left: 5px;
-
-  padding: 3px 7px;
-
-  background: rgba(0,160,90,.85);
-
-  border-radius: 5px;
-
-  font-size: 11px;
-}
-
-/* STÁTUSZ */
-
-.status {
-  margin-top: 10px;
-
-  padding: 11px;
-
-  background: #101d2e;
-
-  border-radius: 10px;
-
-  color: #aebdd0;
-
-  font-size: 14px;
-}
-
-/* W */
-
-.main {
-  margin-top: 13px;
-
-  padding: 18px;
-
-  text-align: center;
-
-  border-radius: 17px;
-
-  background:
-    linear-gradient(
-      145deg,
-      #10243b,
-      #0b1727
-    );
-}
-
-.label {
-  color: #8fa3b8;
-  font-size: 14px;
-}
-
-.w {
-  margin-top: 2px;
-
-  font-size: 52px;
-
-  font-weight: 800;
-
-  color: #5dffa8;
-}
-
-.unit {
-  color: #93a6ba;
-}
-
-/* KÁRTYÁK */
-
-.grid {
-  display: grid;
-
-  grid-template-columns:
-    1fr 1fr;
-
-  gap: 10px;
-
-  margin-top: 10px;
-}
-
-.card {
-  padding: 14px;
-
-  background: #101d2e;
-
-  border: 1px solid #22364e;
-
-  border-radius: 13px;
-}
-
-.value {
-  margin-top: 4px;
-
-  font-size: 23px;
-
-  font-weight: 700;
-}
-
-/* BEÁLLÍTÁSOK */
-
-.settings {
-  margin-top: 12px;
-
-  padding: 15px;
-
-  background: #101d2e;
-
-  border-radius: 14px;
-}
-
-label {
-  display: block;
-
-  margin-bottom: 6px;
-
-  color: #b8c6d5;
-}
-
-input,
-select {
-  width: 100%;
-
-  padding: 12px;
-
-  background: #071321;
-
-  color: white;
-
-  border: 1px solid #334b65;
-
-  border-radius: 9px;
-
-  font-size: 17px;
-}
-
-button {
-  width: 100%;
-
-  margin-top: 10px;
-
-  padding: 13px;
-
-  border: 0;
-
-  border-radius: 10px;
-
-  background: #5dffa8;
-
-  color: #06120c;
-
-  font-size: 16px;
-
-  font-weight: 700;
-}
-
-button.secondary {
-  background: #293d54;
-  color: white;
-}
-
-/* OCR */
-
-.ocr-box {
-  margin-top: 12px;
-
-  padding: 13px;
-
-  background: #0c1827;
-
-  border-radius: 13px;
-
-  font-size: 13px;
-
-  color: #aab8c8;
-}
-
-.progress {
-  height: 7px;
-
-  margin-top: 8px;
-
-  background: #1d3045;
-
-  border-radius: 10px;
-
-  overflow: hidden;
-}
-
-.progress-bar {
-  height: 100%;
-
-  width: 0%;
-
-  background: #00e67d;
-
-  transition: width .15s;
-}
-
-.help {
-  margin-top: 12px;
-
-  padding: 14px;
-
-  background: #0c1827;
-
-  border-radius: 13px;
-
-  color: #9eafc2;
-
-  font-size: 13px;
-
-  line-height: 1.5;
-}
-
-canvas {
-  display: none;
-}
-
-@media(max-width:430px) {
-
-  .w {
-    font-size: 44px;
-  }
-
-}
+.unit{font-size:14px;color:#aebdca}
+.small{font-size:12px;color:#aebdca}
+.status{color:#ffc66d;min-height:25px}
+table{width:100%;font-size:12px;border-collapse:collapse}
+td,th{padding:8px;border-bottom:1px solid #405368;text-align:left}
+canvas{width:100%;height:180px}
 </style>
 </head>
-
 <body>
+<main>
+<h1>⚡ Maxwell EM306B</h1>
+<p class="small">Kamerás multiméter-leolvasó és fogyasztásmérő</p>
 
-<div class="app">
-
-<h1>⚡ Kamerás wattmérő</h1>
-
-<div class="subtitle">
-Multiméter → A → W → Wm
-</div>
-
-
-<!-- KAMERA -->
-
+<div class="card">
+<h2>1. Kamera</h2>
 <div class="camera">
-
-  <video
-    id="video"
-    autoplay
-    playsinline
-    muted>
-  </video>
-
-  <div class="roi">
-
-    <div class="roi-label">
-      MULTIMÉTER KIJELZŐ
-    </div>
-
-  </div>
-
+ <video id="video" autoplay playsinline muted></video>
+ <div class="roi"></div>
+</div>
+<p class="small">Helyezd a multiméter kijelzőjét a szaggatott keretbe!</p>
+<button onclick="startCamera()">Kamera indítása</button>
+<button class="secondary" onclick="stopCamera()">Kamera leállítása</button>
 </div>
 
-
-<div
-  id="status"
-  class="status">
-
-Kamera nincs elindítva.
-
+<div class="card">
+<h2>2. Mit olvasson le?</h2>
+<label>Mérési mód</label>
+<select id="mode">
+<option value="current">Áramerősség (A)</option>
+<option value="voltage">Feszültség (V)</option>
+</select>
+<p class="small">A multimétert állítsd a kiválasztott mérési módba!</p>
+<button onclick="readCamera()" id="readBtn">📷 Kijelző leolvasása</button>
+<button class="secondary" onclick="toggleAuto()" id="autoBtn">Automatikus olvasás</button>
+<p id="status" class="status">Kamera indítására vár...</p>
 </div>
 
-
-<!-- W -->
-
-<div class="main">
-
-  <div class="label">
-    Pillanatnyi teljesítmény
-  </div>
-
-  <div
-    id="w"
-    class="w">
-
-–
-
-  </div>
-
-  <div class="unit">
-    W
-  </div>
-
-</div>
-
-
-<!-- ADATOK -->
-
+<div class="card">
+<h2>3. Mért értékek</h2>
 <div class="grid">
-
-  <div class="card">
-
-    <div class="label">
-      Multiméter
-    </div>
-
-    <div
-      id="amps"
-      class="value">
-
-–
-
-    </div>
-
-  </div>
-
-
-  <div class="card">
-
-    <div class="label">
-      Összesen
-    </div>
-
-    <div
-      id="wm"
-      class="value">
-
-0 Wm
-
-    </div>
-
-  </div>
-
+ <div>
+  <label>Feszültség (V)</label>
+  <input id="voltage" type="number" value="230" step="0.1">
+ </div>
+ <div>
+  <label>Áramerősség (A)</label>
+  <input id="current" type="number" value="0" step="0.001">
+ </div>
+ <div>
+  <label>Teljesítménytényező (cos φ)</label>
+  <input id="pf" type="number" value="1" min="0" max="1" step="0.01">
+ </div>
+</div>
+<button onclick="calculate()">Számítás frissítése</button>
+<div class="grid">
+ <div class="card">
+  <div class="small">Teljesítmény (W)</div>
+  <div class="value" id="watts">0</div>
+ </div>
+ <div class="card">
+  <div class="small">Látszólagos teljesítmény (VA)</div>
+  <div class="value" id="va">0</div>
+ </div>
+ <div class="card">
+  <div class="small">Energia (Wh)</div>
+  <div class="value" id="wh">0</div>
+ </div>
+ <div class="card">
+  <div class="small">Energia (kWh)</div>
+  <div class="value" id="kwh">0</div>
+ </div>
+</div>
+<button onclick="record()">Mérés rögzítése</button>
+<button class="secondary" onclick="resetEnergy()">Energia nullázása</button>
+<p class="small">Az energia számítása a rögzített minták közötti időből történik.</p>
 </div>
 
-
-<!-- OCR ÁLLAPOT -->
-
-<div class="ocr-box">
-
-  <div>
-    OCR állapot:
-    <strong id="ocrStatus">
-      várakozik
-    </strong>
-  </div>
-
-  <div>
-    Felismert nyers érték:
-    <strong id="raw">
-      –
-    </strong>
-  </div>
-
-  <div class="progress">
-
-    <div
-      id="progress"
-      class="progress-bar">
-    </div>
-
-  </div>
-
+<div class="card">
+<h2>4. Fogyasztási grafikon</h2>
+<canvas id="chart" width="800" height="250"></canvas>
 </div>
 
-
-<!-- BEÁLLÍTÁSOK -->
-
-<div class="settings">
-
-  <label for="voltage">
-    Feszültség (V)
-  </label>
-
-  <input
-    id="voltage"
-    type="number"
-    value="230"
-    min="1"
-    step="1">
-
-
-  <label
-    for="mode"
-    style="margin-top:12px">
-
-    Multiméter mértékegysége
-
-  </label>
-
-  <select id="mode">
-
-    <option value="A">
-      A
-    </option>
-
-    <option value="mA">
-      mA
-    </option>
-
-  </select>
-
-
-  <button id="start">
-
-    📷 Kamera indítása
-
-  </button>
-
-
-  <button
-    id="reset"
-    class="secondary">
-
-    ↺ Wm nullázása
-
-  </button>
-
+<div class="card">
+<h2>5. Mérési napló</h2>
+<div style="overflow-x:auto">
+<table>
+<thead><tr><th>Idő</th><th>V</th><th>A</th><th>W</th><th>Wh</th></tr></thead>
+<tbody id="log"></tbody>
+</table>
+</div>
+<button class="secondary" onclick="downloadCSV()">CSV letöltése</button>
 </div>
 
-
-<div class="help">
-
-<strong>Használat</strong><br><br>
-
-1. Indítsd el a kamerát.<br><br>
-
-2. Irányítsd a multiméter kijelzőjére.<br><br>
-
-3. A zöld keretben legyen jól látható
-mindhárom számjegy.<br><br>
-
-4. A program több OCR-eredményt
-összevet, így egyetlen hibás
-felismerés nem változtatja meg
-az értéket.<br><br>
-
-5. A számítás:
-
-<strong>W = A × V</strong><br><br>
-
-A Wm:
-
-<strong>Wm = W × perc</strong>.
-
-</div>
-
-</div>
-
-
-<canvas id="canvas"></canvas>
-
+<p class="small">
+A kamera és az OCR nem helyettesíti a mérőműszert.
+Az eredményeket mindig ellenőrizd a kijelzőn.
+A készülék hálózati használatakor tartsd be a műszer
+biztonsági előírásait.
+</p>
+</main>
 
 <script>
-
-/*
-==================================================
-  ELEMEK
-==================================================
-*/
-
-const video =
-document.getElementById("video");
-
-const canvas =
-document.getElementById("canvas");
-
-const ctx =
-canvas.getContext("2d");
-
-
-const statusEl =
-document.getElementById("status");
-
-const ocrStatus =
-document.getElementById("ocrStatus");
-
-const rawEl =
-document.getElementById("raw");
-
-const progressEl =
-document.getElementById("progress");
-
-const ampsEl =
-document.getElementById("amps");
-
-const wattsEl =
-document.getElementById("w");
-
-const wmEl =
-document.getElementById("wm");
-
-const voltageEl =
-document.getElementById("voltage");
-
-const modeEl =
-document.getElementById("mode");
-
-const startBtn =
-document.getElementById("start");
-
-const resetBtn =
-document.getElementById("reset");
-
-
-/*
-==================================================
-  ÁLLAPOT
-==================================================
-*/
+const $ = id => document.getElementById(id);
 
 let stream = null;
-
-let running = false;
-
 let worker = null;
-
-let ocrBusy = false;
-
-let currentAmps = null;
-
-let totalWm = 0;
-
-let lastEnergyTime = null;
-
-
-/*
-  Stabilizáló puffer.
-*/
-
-let readings = [];
-
-
-/*
-  OCR időzítő.
-*/
-
-let lastOCR =
-0;
-
-const OCR_INTERVAL =
-1800;
-
-
-/*
-==================================================
-  KAMERA
-==================================================
-*/
-
-async function startCamera() {
-
-  try {
-
-    stream =
-      await navigator.mediaDevices
-      .getUserMedia({
-
-        video: {
-
-          facingMode: {
-            ideal: "environment"
-          },
-
-          width: {
-            ideal: 1280
-          },
-
-          height: {
-            ideal: 720
-          }
-
-        },
-
-        audio: false
-
-      });
-
-
-    video.srcObject =
-      stream;
-
-
-    await video.play();
-
-
-    running = true;
-
-
-    startBtn.textContent =
-      "⏹ Kamera leállítása";
-
-
-    statusEl.textContent =
-      "Kamera működik.";
-
-
-    lastEnergyTime =
-      performance.now();
-
-
-    /*
-      OCR worker létrehozása.
-    */
-
-    ocrStatus.textContent =
-      "OCR betöltése...";
-
-
-    worker =
-      await Tesseract.createWorker(
-        "eng",
-        1,
-        {
-
-          logger:
-            message => {
-
-              if (
-                message.status ===
-                "recognizing text"
-              ) {
-
-                const p =
-                  Math.round(
-                    (
-                      message.progress ||
-                      0
-                    ) * 100
-                  );
-
-                progressEl.style.width =
-                  p + "%";
-
-              }
-
-            }
-
-        }
-      );
-
-
-    /*
-      Csak számokat akarunk.
-    */
-
-    await worker.setParameters({
-
-      tessedit_char_whitelist:
-        "0123456789.,-",
-
-      /*
-        Egysoros számként kezelje.
-      */
-
-      tessedit_pageseg_mode:
-        "7"
-
-    });
-
-
-    ocrStatus.textContent =
-      "készen áll";
-
-
-    requestAnimationFrame(
-      mainLoop
-    );
-
-
-    requestAnimationFrame(
-      energyLoop
-    );
-
-  }
-
-  catch (error) {
-
-    console.error(error);
-
-    statusEl.textContent =
-      "Hiba: " +
-      error.message;
-
-  }
-
+let busy = false;
+let autoTimer = null;
+let energy = 0;
+let previousPower = null;
+let previousTime = null;
+let rows = [];
+let points = [];
+
+async function startCamera(){
+ try{
+  stream = await navigator.mediaDevices.getUserMedia({
+   video:{facingMode:"environment"},
+   audio:false
+  });
+  $("video").srcObject = stream;
+  $("status").textContent = "Kamera működik.";
+ }catch(e){
+  $("status").textContent = "Kamera hiba: " + e.message;
+ }
 }
 
-
-/*
-==================================================
-  LEÁLLÍTÁS
-==================================================
-*/
-
-async function stopCamera() {
-
-  running = false;
-
-
-  if (worker) {
-
-    try {
-
-      await worker.terminate();
-
-    }
-
-    catch (e) {}
-
-    worker = null;
-
-  }
-
-
-  if (stream) {
-
-    stream
-    .getTracks()
-    .forEach(
-      track =>
-        track.stop()
-    );
-
-    stream = null;
-
-  }
-
-
-  video.srcObject =
-    null;
-
-
-  startBtn.textContent =
-    "📷 Kamera indítása";
-
-
-  statusEl.textContent =
-    "Kamera leállítva.";
-
-
-  ocrStatus.textContent =
-    "várakozik";
-
+function stopCamera(){
+ if(stream) stream.getTracks().forEach(t=>t.stop());
+ stream=null;
+ $("video").srcObject=null;
+ stopAuto();
 }
 
-
-/*
-==================================================
-  KÉPKIVÁGÁS
-==================================================
-*/
-
-function captureDisplay() {
-
-  if (
-    !video.videoWidth ||
-    !video.videoHeight
-  ) {
-
-    return null;
-
+async function initOCR(){
+ if(worker) return;
+ $("status").textContent="OCR motor betöltése...";
+ worker=await Tesseract.createWorker("eng",1,{
+  logger:m=>{
+   if(m.status==="recognizing text"){
+    $("status").textContent=
+     "Felismerés: "+Math.round(m.progress*100)+"%";
+   }
   }
-
-
-  const vw =
-    video.videoWidth;
-
-  const vh =
-    video.videoHeight;
-
-
-  /*
-    Ugyanaz a terület,
-    mint a zöld keret.
-  */
-
-  const sx =
-    vw * 0.10;
-
-  const sy =
-    vh * 0.34;
-
-  const sw =
-    vw * 0.80;
-
-  const sh =
-    vh * 0.32;
-
-
-  /*
-    Nagyítjuk az OCR számára.
-  */
-
-  canvas.width =
-    1200;
-
-  canvas.height =
-    480;
-
-
-  ctx.drawImage(
-
-    video,
-
-    sx,
-    sy,
-    sw,
-    sh,
-
-    0,
-    0,
-    canvas.width,
-    canvas.height
-
-  );
-
-
-  return canvas;
-
+ });
+ await worker.setParameters({
+  tessedit_char_whitelist:"0123456789.,-"
+ });
 }
 
+async function readCamera(){
+ if(busy)return;
+ if(!stream){
+  $("status").textContent="Előbb indítsd el a kamerát!";
+  return;
+ }
 
-/*
-==================================================
-  KÉP ELŐFELDOLGOZÁS
-==================================================
-*/
+ busy=true;
+ $("readBtn").disabled=true;
 
-function preprocess(source) {
+ try{
+  await initOCR();
 
-  const out =
-    document.createElement(
-      "canvas"
-    );
+  const v=$("video");
+  const c=document.createElement("canvas");
 
+  // A kijelző körüli középső terület kivágása
+  const w=v.videoWidth;
+  const h=v.videoHeight;
+  const x=w*.12, y=h*.25;
+  const cw=w*.76, ch=h*.48;
 
-  out.width =
-    source.width;
+  c.width=1200;
+  c.height=500;
 
-  out.height =
-    source.height;
+  const ctx=c.getContext("2d");
+  ctx.filter="grayscale(1) contrast(2)";
+  ctx.drawImage(v,x,y,cw,ch,0,0,c.width,c.height);
 
+  const result=await worker.recognize(c);
+  const text=result.data.text.replace(/,/g,".");
 
-  const c =
-    out.getContext("2d");
+  $("status").textContent="Felismerés: "+text;
 
+  // Szám keresése a kijelzőn
+  const matches=text.match(/-?\d{1,4}(?:\.\d{1,3})?/g);
 
-  c.drawImage(
-    source,
-    0,
-    0
-  );
-
-
-  const image =
-    c.getImageData(
-      0,
-      0,
-      out.width,
-      out.height
-    );
-
-
-  const data =
-    image.data;
-
-
-  /*
-    Szürkeárnyalat + kontraszt.
-  */
-
-  for (
-    let i = 0;
-    i < data.length;
-    i += 4
-  ) {
-
-    const gray =
-      0.299 * data[i] +
-      0.587 * data[i + 1] +
-      0.114 * data[i + 2];
-
-
-    /*
-      Erősebb kontraszt.
-    */
-
-    let v =
-      (gray - 110) * 2.4 + 128;
-
-
-    v =
-      Math.max(
-        0,
-        Math.min(
-          255,
-          v
-        )
-      );
-
-
-    data[i] =
-      v;
-
-    data[i + 1] =
-      v;
-
-    data[i + 2] =
-      v;
-
+  if(!matches || !matches.length){
+   $("status").textContent="Nem sikerült felismerni. Próbáld újra!";
+   return;
   }
 
+  const value=parseFloat(matches[0]);
 
-  c.putImageData(
-    image,
-    0,
-    0
-  );
+  if(!Number.isFinite(value))return;
 
-
-  return out;
-
+  if($("mode").value==="current"){
+   $("current").value=value;
+   $("status").textContent="Áram felismerve: "+value+" A";
+   record();
+  }else{
+   $("voltage").value=value;
+   $("status").textContent="Feszültség felismerve: "+value+" V";
+   calculate();
+  }
+ }catch(e){
+  $("status").textContent="OCR hiba: "+e.message;
+ }finally{
+  busy=false;
+  $("readBtn").disabled=false;
+ }
 }
 
+function getPower(){
+ const v=Number($("voltage").value);
+ const a=Number($("current").value);
+ const pf=Number($("pf").value);
 
-/*
-==================================================
-  OCR
-==================================================
-*/
+ if(!Number.isFinite(v)||!Number.isFinite(a)||
+    !Number.isFinite(pf)||pf<0||pf>1) return null;
 
-async function recognize() {
-
-  if (
-    !running ||
-    !worker ||
-    ocrBusy
-  ) {
-
-    return;
-
-  }
-
-
-  ocrBusy = true;
-
-
-  try {
-
-    const frame =
-      captureDisplay();
-
-
-    if (!frame) {
-      return;
-    }
-
-
-    const processed =
-      preprocess(
-        frame
-      );
-
-
-    progressEl.style.width =
-      "0%";
-
-
-    ocrStatus.textContent =
-      "felismerés...";
-
-
-    const result =
-      await worker.recognize(
-        processed
-      );
-
-
-    const text =
-      result.data.text;
-
-
-    rawEl.textContent =
-      text.trim() ||
-      "–";
-
-
-    const value =
-      extractNumber(
-        text
-      );
-
-
-    if (
-      value !== null
-    ) {
-
-      acceptReading(
-        value
-      );
-
-    }
-
-
-    ocrStatus.textContent =
-      "készen áll";
-
-  }
-
-  catch (error) {
-
-    console.error(
-      "OCR:",
-      error
-    );
-
-
-    ocrStatus.textContent =
-      "hiba";
-
-  }
-
-  finally {
-
-    ocrBusy = false;
-
-  }
-
+ return {va:v*a,w:v*a*pf};
 }
 
-
-/*
-==================================================
-  SZÁM KINYERÉSE
-==================================================
-*/
-
-function extractNumber(text) {
-
-  if (!text) {
-    return null;
-  }
-
-
-  /*
-    OCR-ben gyakori hibák.
-  */
-
-  let s =
-    text
-    .replace(
-      /O/gi,
-      "0"
-    )
-    .replace(
-      /I/gi,
-      "1"
-    )
-    .replace(
-      /L/gi,
-      "1"
-    )
-    .replace(
-      /S/gi,
-      "5"
-    )
-    .replace(
-      /,/g,
-      "."
-    );
-
-
-  /*
-    Csak számokat és pontot
-    keresünk.
-  */
-
-  const matches =
-    s.match(
-      /\d+(?:\.\d+)?/g
-    );
-
-
-  if (
-    !matches ||
-    !matches.length
-  ) {
-
-    return null;
-
-  }
-
-
-  /*
-    A 3 digites multiméterhez
-    a 0–999 tartományt használjuk.
-  */
-
-  const candidates =
-    matches
-    .map(Number)
-    .filter(
-      n =>
-        Number.isFinite(n) &&
-        n >= 0 &&
-        n <= 999
-    );
-
-
-  if (
-    !candidates.length
-  ) {
-
-    return null;
-
-  }
-
-
-  /*
-    Ha több számot talált,
-    a leghosszabbat választjuk.
-  */
-
-  candidates.sort(
-    (a,b) =>
-      String(b).length -
-      String(a).length
-  );
-
-
-  return candidates[0];
-
+function calculate(){
+ const p=getPower();
+ if(!p)return;
+ $("va").textContent=p.va.toFixed(2);
+ $("watts").textContent=p.w.toFixed(2);
+ $("wh").textContent=energy.toFixed(3);
+ $("kwh").textContent=(energy/1000).toFixed(6);
 }
 
+function record(){
+ const p=getPower();
+ if(!p)return;
 
-/*
-==================================================
-  STABILIZÁLÁS
-==================================================
-*/
+ const now=Date.now();
 
-function acceptReading(
-  value
-) {
+ // Trapezoidos energia-integrálás
+ if(previousTime!==null && previousPower!==null){
+  const dt=(now-previousTime)/3600000;
+  energy+=(previousPower+p.w)/2*dt;
+ }
 
-  readings.push(
-    value
-  );
+ previousPower=p.w;
+ previousTime=now;
 
+ const row={
+  time:new Date(now).toLocaleString("hu-HU"),
+  v:Number($("voltage").value),
+  a:Number($("current").value),
+  w:p.w,
+  wh:energy
+ };
 
-  /*
-    Utolsó 8 mérés.
-  */
+ rows.unshift(row);
+ points.push(p.w);
+ if(points.length>100)points.shift();
 
-  if (
-    readings.length > 8
-  ) {
+ $("log").innerHTML=rows.slice(0,100).map(r=>
+  `<tr><td>${r.time}</td><td>${r.v}</td>
+   <td>${r.a}</td><td>${r.w.toFixed(2)}</td>
+   <td>${r.wh.toFixed(3)}</td></tr>`
+ ).join("");
 
-    readings.shift();
-
-  }
-
-
-  /*
-    Ha van legalább 3 hasonló
-    egymás utáni érték,
-    elfogadjuk.
-  */
-
-  const sorted =
-    [...readings]
-    .sort(
-      (a,b) =>
-        a - b
-    );
-
-
-  const median =
-    sorted[
-      Math.floor(
-        sorted.length / 2
-      )
-    ];
-
-
-  /*
-    3 digit esetén kb. 2%
-    eltérést tolerálunk.
-  */
-
-  const tolerance =
-    Math.max(
-      0.01,
-      Math.abs(median) *
-      0.02
-    );
-
-
-  const close =
-    readings.filter(
-      n =>
-        Math.abs(
-          n - median
-        ) <= tolerance
-    );
-
-
-  if (
-    close.length >= 3
-  ) {
-
-    updateMeasurement(
-      median
-    );
-
-  }
-
+ calculate();
+ drawChart();
 }
 
+function drawChart(){
+ const c=$("chart");
+ const ctx=c.getContext("2d");
+ const w=c.width,h=c.height;
+ ctx.clearRect(0,0,w,h);
 
-/*
-==================================================
-  W SZÁMÍTÁS
-==================================================
-*/
+ if(!points.length)return;
 
-function updateMeasurement(
-  meterValue
-) {
+ const max=Math.max(1,...points)*1.15;
+ ctx.strokeStyle="#50d6a0";
+ ctx.lineWidth=3;
+ ctx.beginPath();
 
-  let amper =
-    meterValue;
+ points.forEach((p,i)=>{
+  const x=10+i*(w-20)/Math.max(1,points.length-1);
+  const y=h-10-(p/max)*(h-25);
+  if(i===0)ctx.moveTo(x,y);
+  else ctx.lineTo(x,y);
+ });
+ ctx.stroke();
 
-
-  /*
-    mA → A
-  */
-
-  if (
-    modeEl.value === "mA"
-  ) {
-
-    amper =
-      meterValue / 1000;
-
-  }
-
-
-  currentAmps =
-    amper;
-
-
-  ampsEl.textContent =
-    format(
-      meterValue
-    ) +
-    " " +
-    modeEl.value;
-
-
-  const v =
-    Number(
-      voltageEl.value
-    );
-
-
-  const currentW =
-    amper * v;
-
-
-  wattsEl.textContent =
-    format(
-      currentW
-    );
-
-
-  statusEl.textContent =
-    "✓ Stabil érték: " +
-    format(
-      meterValue
-    ) +
-    " " +
-    modeEl.value;
-
+ ctx.fillStyle="#edf3f7";
+ ctx.fillText("Watt",10,15);
 }
 
-
-/*
-==================================================
-  WM
-==================================================
-*/
-
-function energyLoop() {
-
-  if (!running) {
-    return;
-  }
-
-
-  const now =
-    performance.now();
-
-
-  if (
-    lastEnergyTime !== null &&
-    currentAmps !== null
-  ) {
-
-    const minutes =
-      (
-        now -
-        lastEnergyTime
-      ) / 60000;
-
-
-    const v =
-      Number(
-        voltageEl.value
-      );
-
-
-    const currentW =
-      currentAmps * v;
-
-
-    /*
-      Wm = W × perc
-    */
-
-    totalWm +=
-      currentW *
-      minutes;
-
-
-    wmEl.textContent =
-      format(
-        totalWm
-      ) +
-      " Wm";
-
-  }
-
-
-  lastEnergyTime =
-    now;
-
-
-  requestAnimationFrame(
-    energyLoop
-  );
-
+function resetEnergy(){
+ if(!confirm("Biztosan nullázod az energiafogyasztást?"))return;
+ energy=0;
+ previousPower=null;
+ previousTime=null;
+ rows=[];
+ points=[];
+ $("log").innerHTML="";
+ calculate();
+ drawChart();
 }
 
-
-/*
-==================================================
-  FŐ CIKLUS
-==================================================
-*/
-
-function mainLoop(
-  timestamp
-) {
-
-  if (!running) {
-    return;
-  }
-
-
-  if (
-    timestamp - lastOCR >
-    OCR_INTERVAL
-  ) {
-
-    lastOCR =
-      timestamp;
-
-
-    recognize();
-
-  }
-
-
-  requestAnimationFrame(
-    mainLoop
-  );
-
+function toggleAuto(){
+ if(autoTimer){
+  stopAuto();
+ }else{
+  autoTimer=setInterval(()=>{
+   if(!busy)readCamera();
+  },3000);
+  $("autoBtn").textContent="Automatikus olvasás leállítása";
+  $("status").textContent="Automatikus leolvasás aktív.";
+ }
 }
 
-
-/*
-==================================================
-  FORMÁZÁS
-==================================================
-*/
-
-function format(
-  n
-) {
-
-  if (
-    !Number.isFinite(n)
-  ) {
-
-    return "–";
-
-  }
-
-
-  if (
-    Math.abs(n) >= 100
-  ) {
-
-    return Math.round(n)
-      .toLocaleString(
-        "hu-HU"
-      );
-
-  }
-
-
-  return n
-    .toFixed(3)
-    .replace(
-      /0+$/,
-      ""
-    )
-    .replace(
-      /\.$/,
-      ""
-    );
-
+function stopAuto(){
+ if(autoTimer)clearInterval(autoTimer);
+ autoTimer=null;
+ $("autoBtn").textContent="Automatikus olvasás";
 }
 
+function downloadCSV(){
+ const header="Idő;Feszültség (V);Áram (A);Teljesítmény (W);Energia (Wh)";
+ const data=rows.map(r=>
+  [r.time,r.v,r.a,r.w.toFixed(3),r.wh.toFixed(3)].join(";")
+ );
+ const blob=new Blob(
+  ["\uFEFF"+[header,...data].join("\n")],
+  {type:"text/csv;charset=utf-8"}
+ );
+ const url=URL.createObjectURL(blob);
+ const a=document.createElement("a");
+ a.href=url;
+ a.download="maxwell-meres.csv";
+ a.click();
+ URL.revokeObjectURL(url);
+}
 
-/*
-==================================================
-  GOMBOK
-==================================================
-*/
-
-startBtn.addEventListener(
-  "click",
-  () => {
-
-    if (running) {
-
-      stopCamera();
-
-    }
-
-    else {
-
-      startCamera();
-
-    }
-
-  }
-);
-
-
-resetBtn.addEventListener(
-  "click",
-  () => {
-
-    totalWm = 0;
-
-    wmEl.textContent =
-      "0 Wm";
-
-
-    lastEnergyTime =
-      running
-      ? performance.now()
-      : null;
-
-  }
-);
-
-
-voltageEl.addEventListener(
-  "input",
-  () => {
-
-    if (
-      currentAmps !== null
-    ) {
-
-      wattsEl.textContent =
-        format(
-          currentAmps *
-          Number(
-            voltageEl.value
-          )
-        );
-
-    }
-
-  }
-);
-
+["voltage","current","pf"].forEach(id=>{
+ $(id).addEventListener("input",calculate);
+});
+calculate();
 </script>
-
 </body>
 </html>
